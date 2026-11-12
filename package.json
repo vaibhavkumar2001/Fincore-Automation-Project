@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "express": "^5.3.0"
+  },
+  "name": "fincore-banking-automation-framework-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "playwright-bdd": "^9.2.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+    "scripts": {
+    "start:app": "tsx app/src/server.ts",
+    "test": "bddgen && playwright test",
+    "test:ui": "bddgen && playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
