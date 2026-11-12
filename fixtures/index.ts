@@ -2,7 +2,7 @@ import { request } from '@playwright/test';
 import { test as base } from 'playwright-bdd';
 import { ApiClient } from '../api/apiClient';
 
-type Ctx = {
+export type Ctx = {
   idempotencyKey?: string;
   paymentId?: string;
   requestBody?: Record<string, unknown>;

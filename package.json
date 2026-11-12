@@ -13,9 +13,10 @@
     "playwright-bdd": "^9.2.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "zod": "^4.6.7"
   },
-    "scripts": {
+  "scripts": {
     "start:app": "tsx app/src/server.ts",
     "test": "bddgen && playwright test",
     "test:ui": "bddgen && playwright test --ui",

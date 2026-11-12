@@ -37,7 +37,7 @@ router.post('/', idempotency, (req, res) => {
 
 // Capture a payment
 router.post('/:id/capture', idempotency, (req, res) => {
-  const payment = payments.get(req.params.id);
+  const payment = payments.get(String(req.params.id));
   if (!payment) return res.status(404).json({ error: 'Payment not found' });
 
   if (!transition(payment, 'captured')) {
@@ -48,7 +48,7 @@ router.post('/:id/capture', idempotency, (req, res) => {
 
 // Refund a payment
 router.post('/:id/refund', idempotency, (req, res) => {
-  const payment = payments.get(req.params.id);
+  const payment = payments.get(String(req.params.id));
   if (!payment) return res.status(404).json({ error: 'Payment not found' });
 
   if (!transition(payment, 'refunded')) {
@@ -57,8 +57,9 @@ router.post('/:id/refund', idempotency, (req, res) => {
   return res.status(200).json(payment);
 });
 
+// Get a payment by id
 router.get('/:id', (req, res) => {
-  const payment = payments.get(req.params.id);
+  const payment = payments.get(String(req.params.id));
   if (!payment) return res.status(404).json({ error: 'Payment not found' });
   return res.status(200).json(payment);
 });
