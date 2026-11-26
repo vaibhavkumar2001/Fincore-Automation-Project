@@ -6,6 +6,8 @@ export type Ctx = {
   idempotencyKey?: string;
   paymentId?: string;
   requestBody?: Record<string, unknown>;
+  username?: string;
+  password?: string;
 };
 
 type MyFixtures = {
@@ -17,13 +19,7 @@ const apiBaseURL = process.env.API_BASE_URL ?? 'http://localhost:3000';
 
 export const test = base.extend<MyFixtures>({
   apiClient: async ({}, use) => {
-    const apiRequestContext = await request.newContext({
-      baseURL: apiBaseURL,
-      // Token is optional until the auth fixture is added on Day 3
-      extraHTTPHeaders: process.env.API_TOKEN
-        ? { Authorization: `Bearer ${process.env.API_TOKEN}` }
-        : {},
-    });
+    const apiRequestContext = await request.newContext({ baseURL: apiBaseURL });
     await use(new ApiClient(apiRequestContext));
     await apiRequestContext.dispose();
   },

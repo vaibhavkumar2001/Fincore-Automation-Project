@@ -5,8 +5,14 @@ type Headers = Record<string, string>;
 export class ApiClient {
   private lastResponse?: APIResponse;
   private lastResponseBody: unknown;
+  private defaultHeaders: Headers = {};
 
   constructor(private readonly request: APIRequestContext) {}
+
+  // Headers set here are sent with every request (e.g. the Authorization token)
+  setHeader(name: string, value: string) {
+    this.defaultHeaders[name] = value;
+  }
 
   async get(path: string, headers?: Headers) {
     return this.send('GET', path, undefined, headers);
@@ -61,7 +67,7 @@ export class ApiClient {
     const response = await this.request.fetch(path, {
       method,
       data: payload,
-      headers,
+      headers: { ...this.defaultHeaders, ...headers },
     });
 
     this.lastResponse = response;

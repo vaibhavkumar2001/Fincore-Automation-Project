@@ -2,6 +2,7 @@ Feature: Payments API
 
   Background:
     Given the API base url is set
+    And I am logged in as a new user
 
   Scenario: Create a payment
     When I create a payment with amount 5000 and currency "INR"
