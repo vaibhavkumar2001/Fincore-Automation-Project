@@ -8,6 +8,11 @@ export type Ctx = {
   requestBody?: Record<string, unknown>;
   username?: string;
   password?: string;
+  accountId?: string;
+  fromAccountId?: string;
+  toAccountId?: string;
+  otherAccountId?: string;
+  transferId?: string;
 };
 
 type MyFixtures = {

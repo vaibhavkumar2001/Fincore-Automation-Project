@@ -1,5 +1,7 @@
 import express from 'express';
 import authRoutes from './auth/auth.routes';
+import accountRoutes from './accounts/account.routes';
+import transferRoutes from './transfers/transfer.routes';
 import paymentRoutes from './payments/payment.routes';
 import { authMiddleware } from './middleware/auth';
 
@@ -13,4 +15,6 @@ app.get('/health', (_req, res) => res.status(200).json({ status: 'ok' }));
 app.use('/auth', authRoutes);
 
 // Protected routes: a valid Bearer token is required
+app.use('/accounts', authMiddleware, accountRoutes);
+app.use('/transfers', authMiddleware, transferRoutes);
 app.use('/payments', authMiddleware, paymentRoutes);
