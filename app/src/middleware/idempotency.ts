@@ -36,7 +36,13 @@ export function idempotency(req: Request, res: Response, next: NextFunction) {
   // Capture the response so we can store it for future replays
   const originalJson = res.json.bind(res);
   res.json = (body: unknown) => {
-    store.set(storeKey, { requestHash, statusCode: res.statusCode, body });
+    // Store a deep copy (snapshot), so later changes to the live object
+    // cannot alter the cached response
+    store.set(storeKey, {
+      requestHash,
+      statusCode: res.statusCode,
+      body: structuredClone(body),
+    });
     return originalJson(body);
   };
 
