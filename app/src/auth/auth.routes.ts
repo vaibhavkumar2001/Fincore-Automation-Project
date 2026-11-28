@@ -24,7 +24,14 @@ router.post('/register', (req, res) => {
 router.post('/login', (req, res) => {
   const { username, password } = req.body ?? {};
 
-  if (typeof username !== 'string' || users.get(username) !== password) {
+  // Both fields must be strings. Otherwise "unknown user + missing password"
+  // would compare undefined with undefined and wrongly succeed.
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  const storedPassword = users.get(username);
+  if (storedPassword === undefined || storedPassword !== password) {
     return res.status(401).json({ error: 'Invalid username or password' });
   }
 

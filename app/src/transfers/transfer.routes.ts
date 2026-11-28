@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { randomUUID } from 'crypto';
 import { idempotency } from '../middleware/idempotency';
 import { accounts, ledger } from '../accounts/account.store';
+import { withAccountLocks } from '../accounts/account.lock';
 
 interface Transfer {
   id: string;
@@ -17,7 +18,16 @@ interface Transfer {
 const router = Router();
 const transfers = new Map<string, Transfer>();
 
-router.post('/', idempotency, (req, res) => {
+// Simulates database latency. Controlled by the TRANSFER_DELAY_MS env variable.
+// Default is 0, so normal tests run at full speed and without any extra await.
+async function simulateLatency(): Promise<void> {
+  const delayMs = Number(process.env.TRANSFER_DELAY_MS ?? 0);
+  if (delayMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+}
+
+router.post('/', idempotency, async (req, res) => {
   const { fromAccountId, toAccountId, amount } = req.body ?? {};
 
   if (typeof fromAccountId !== 'string' || typeof toAccountId !== 'string') {
@@ -41,34 +51,46 @@ router.post('/', idempotency, (req, res) => {
   if (from.currency !== to.currency) {
     return res.status(400).json({ error: 'Currency mismatch between accounts' });
   }
-  if (from.balance < amount) {
+
+  // FIX (Day 6): the balance check and the money movement now run inside one
+  // lock, so parallel requests can no longer pass the check at the same time.
+  const outcome = await withAccountLocks([fromAccountId, toAccountId], async () => {
+    if (from.balance < amount) {
+      return { ok: false as const };
+    }
+
+    // The latency is still simulated, but now it happens while holding the lock
+    await simulateLatency();
+
+    from.balance -= amount;
+    to.balance += amount;
+
+    const transfer: Transfer = {
+      id: randomUUID(),
+      owner: res.locals.username,
+      fromAccountId,
+      toAccountId,
+      amount,
+      currency: from.currency,
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+    };
+    transfers.set(transfer.id, transfer);
+
+    // Double-entry ledger: every transfer writes one debit and one credit
+    const createdAt = transfer.createdAt;
+    ledger.push(
+      { id: randomUUID(), accountId: fromAccountId, transferId: transfer.id, type: 'debit', amount, createdAt },
+      { id: randomUUID(), accountId: toAccountId, transferId: transfer.id, type: 'credit', amount, createdAt },
+    );
+
+    return { ok: true as const, transfer };
+  });
+
+  if (!outcome.ok) {
     return res.status(422).json({ error: 'Insufficient funds' });
   }
-
-  // Money moves: debit the source, credit the destination
-  from.balance -= amount;
-  to.balance += amount;
-
-  const transfer: Transfer = {
-    id: randomUUID(),
-    owner: res.locals.username,
-    fromAccountId,
-    toAccountId,
-    amount,
-    currency: from.currency,
-    status: 'completed',
-    createdAt: new Date().toISOString(),
-  };
-  transfers.set(transfer.id, transfer);
-
-  // Double-entry ledger: every transfer writes one debit and one credit
-  const createdAt = transfer.createdAt;
-  ledger.push(
-    { id: randomUUID(), accountId: fromAccountId, transferId: transfer.id, type: 'debit', amount, createdAt },
-    { id: randomUUID(), accountId: toAccountId, transferId: transfer.id, type: 'credit', amount, createdAt },
-  );
-
-  return res.status(201).json(transfer);
+  return res.status(201).json(outcome.transfer);
 });
 
 router.get('/:id', (req, res) => {

@@ -13,10 +13,22 @@ export default defineConfig({
   testDir,
   timeout: 30000,
 
-  // Starts the FinCore API automatically before the tests run
-  webServer: {
-    command: 'npm run start:app',
-    url: 'http://localhost:3000/health',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    // Normal server: no artificial delay, used by all regular tests
+    {
+      command: 'npm run start:app',
+      url: 'http://localhost:3000/health',
+      reuseExistingServer: !process.env.CI,
+    },
+    // Slow server: simulates database latency, used only by the race tests
+    {
+      command: 'npm run start:app',
+      url: 'http://localhost:3001/health',
+      reuseExistingServer: !process.env.CI,
+      env: {
+        PORT: '3001',
+        TRANSFER_DELAY_MS: '100',
+      },
+    },
+  ],
 });

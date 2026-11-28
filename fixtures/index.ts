@@ -13,6 +13,11 @@ export type Ctx = {
   toAccountId?: string;
   otherAccountId?: string;
   transferId?: string;
+  raceToken?: string;
+  raceResults?: { status: number; body: any }[];
+  raceStartTotal?: number;
+  otherToken?: string;
+  otherResult?: { status: number; body: any };
 };
 
 type MyFixtures = {
