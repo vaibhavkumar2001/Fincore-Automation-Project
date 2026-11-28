@@ -32,7 +32,7 @@ export async function idempotency(req: Request, res: Response, next: NextFunctio
   }
 
   // Scope the key per route so the same key cannot collide across endpoints
-  const storeKey = `${req.method}:${req.path}:${key}`;
+  const storeKey = `${res.locals.username}:${req.method}:${req.path}:${key}`;
   const requestHash = hashBody(req.body);
 
   // Case 1: a finished response exists for this key
