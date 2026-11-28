@@ -1,7 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 
-// token -> username (in-memory, demo only)
-export const tokens = new Map<string, string>();
+interface TokenRecord {
+  username: string;
+  expiresAt: number;
+}
+
+// token -> record with expiry (in-memory, demo only)
+export const tokens = new Map<string, TokenRecord>();
+
+// Token lifetime in milliseconds. Default: 1 hour. Overridable for tests.
+export function tokenTtlMs(): number {
+  const ttl = Number(process.env.TOKEN_TTL_MS);
+  return Number.isFinite(ttl) && ttl > 0 ? ttl : 60 * 60 * 1000;
+}
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const header = req.header('Authorization');
@@ -11,12 +22,18 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 
   const token = header.slice('Bearer '.length);
-  const username = tokens.get(token);
+  const record = tokens.get(token);
 
-  if (!username) {
+  if (!record) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
-  res.locals.username = username;
+  // Expired tokens are removed and rejected
+  if (Date.now() >= record.expiresAt) {
+    tokens.delete(token);
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  res.locals.username = record.username;
   next();
 }

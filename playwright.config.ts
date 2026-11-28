@@ -30,5 +30,15 @@ export default defineConfig({
         TRANSFER_DELAY_MS: '100',
       },
     },
+    // Short-lived tokens server: used only by the token expiry test
+    {
+      command: 'npm run start:app',
+      url: 'http://localhost:3002/health',
+      reuseExistingServer: !process.env.CI,
+      env: {
+        PORT: '3002',
+        TOKEN_TTL_MS: '1000',
+      },
+    },
   ],
 });

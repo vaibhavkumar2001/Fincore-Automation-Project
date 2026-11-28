@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { randomUUID } from 'crypto';
-import { tokens } from '../middleware/auth';
+import { tokens, tokenTtlMs } from '../middleware/auth';
 
 const router = Router();
 
@@ -36,7 +36,7 @@ router.post('/login', (req, res) => {
   }
 
   const token = randomUUID();
-  tokens.set(token, username);
+    tokens.set(token, { username, expiresAt: Date.now() + tokenTtlMs() });
   return res.status(200).json({ token });
 });
 
